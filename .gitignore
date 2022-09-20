@@ -1,0 +1,14 @@
+__pycache__
+*.jpg
+*.png
+*.tiff
+*.jfif
+*.mp4
+*.avi
+.env
+*.bin
+*.xml
+venv
+.vscode
+!Test_1.jpg
+!Test_2.jpg
