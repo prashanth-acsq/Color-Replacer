@@ -1,9 +1,10 @@
 import os
 import sys
 import cv2
-import argparse
+import platform
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 BASE_PATH: str   = os.path.dirname(os.path.abspath(__file__))
 INPUT_PATH: str  = os.path.join(BASE_PATH, "input")
@@ -21,7 +22,7 @@ def show_images(
     cmap_2: str="gnuplot2",
     title_1: str="Original",
     title_2: str="Processed",
-    ) -> None:
+) -> None:
 
     plt.figure()
     plt.subplot(1, 2, 1)
@@ -32,27 +33,46 @@ def show_images(
     plt.imshow(image_2, cmap=cmap_2)
     plt.axis("off")
     if title_2: plt.title(title_2)
-    figmanager = plt.get_current_fig_manager()
-    figmanager.window.state("zoomed")
+    if platform.system() == "Windows":
+        figmanager = plt.get_current_fig_manager()
+        figmanager.window.state("zoomed")
     plt.show()
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--filename", "-f", type=str, default="Test_1.jpg", help="Filename of the Image")
-    parser.add_argument("--downscale", "-ds", type=float, default=None, help="Downscale Factor")
-    parser.add_argument("--new-red", "-nr", type=int, default=0, help="New Red Channel Color [0, 255]")
-    parser.add_argument("--new-green", "-ng", type=int, default=0, help="New Green  Channel Color [0, 255]")
-    parser.add_argument("--new-blue", "-nb", type=int, default=0, help="New Blue Channel Color [0, 255]")
-    parser.add_argument("--save", "-s", action="store_true", help="Save Mode")
-    args = parser.parse_args()
 
-    assert args.filename in os.listdir(INPUT_PATH), "File not foundin input directory"
-    assert args.new_red >= 0 and args.new_red <= 255, "[0 - 255]"
-    assert args.new_green >= 0 and args.new_green <= 255, "[0 - 255]"
-    assert args.new_blue >= 0 and args.new_blue <= 255, "[0 - 255]"
+    args_1: tuple = ("--filename", "-f")
+    args_2: tuple = ("--new-red", "-nr")
+    args_3: tuple = ("--new-green", "-ng")
+    args_4: tuple = ("--new-blue", "-nb")
+    args_5: tuple = ("--save", "-s")
 
-    image = get_image(os.path.join(INPUT_PATH, args.filename))
+    filename: str = "Test_1.jpg"
+    new_red: int = 0
+    new_green: int = 0
+    new_blue: int = 0
+    save: bool = False
+
+    if args_1[0] in sys.argv: filename = sys.argv[sys.argv.index(args_1[0]) + 1]
+    if args_1[1] in sys.argv: filename = sys.argv[sys.argv.index(args_1[1]) + 1]
+
+    if args_2[0] in sys.argv: new_red = int(sys.argv[sys.argv.index(args_2[0]) + 1])
+    if args_2[1] in sys.argv: new_red = int(sys.argv[sys.argv.index(args_2[1]) + 1])
+
+    if args_3[0] in sys.argv: new_green = int(sys.argv[sys.argv.index(args_3[0]) + 1])
+    if args_3[1] in sys.argv: new_green = int(sys.argv[sys.argv.index(args_3[1]) + 1])
+
+    if args_4[0] in sys.argv: new_blue = int(sys.argv[sys.argv.index(args_4[0]) + 1])
+    if args_4[1] in sys.argv: new_blue = int(sys.argv[sys.argv.index(args_4[1]) + 1])
+
+    if args_5[0] in sys.argv or args_5[1] in sys.argv: save = True
+
+    assert filename in os.listdir(INPUT_PATH), f"{filename} not found in input directory"
+    assert new_red >= 0 and new_red <= 255, "Supported value range = [0 - 255]"
+    assert new_green >= 0 and new_green <= 255, "Supported value range = [0 - 255]"
+    assert new_blue >= 0 and new_blue <= 255, "Supported value range = [0 - 255]"
+
+    image = get_image(os.path.join(INPUT_PATH, filename))
 
     def get_color(event):
         global r, g, b
@@ -66,15 +86,19 @@ def main():
     plt.imshow(image, cmap="gnuplot2")
     plt.axis("off")
     plt.title("Click anywhere on the image")
-    figmanager = plt.get_current_fig_manager()
-    figmanager.window.state("zoomed")
+    if platform.system() == "Windows":
+        figmanager = plt.get_current_fig_manager()
+        figmanager.window.state("zoomed")
     plt.show()
 
     new_image = image.copy()
-    new_image = np.where(new_image == (r, g, b), (args.new_red, args.new_green, args.new_blue), new_image).astype("uint8")
+    new_image = np.where(new_image == (r, g, b), (new_red, new_green, new_blue), new_image).astype("uint8")
 
-    if args.save: cv2.imwrite(os.path.join(OUTPUT_PATH, args.filename[:-4] + " - Processed.jpg"), cv2.cvtColor(src=new_image, code=cv2.COLOR_RGB2BGR))
-    else: show_images(image, new_image)
+    if save: 
+        cv2.imwrite(os.path.join(OUTPUT_PATH, filename[:-4] + " - Processed.jpg"), cv2.cvtColor(src=new_image, code=cv2.COLOR_RGB2BGR))
+    else: 
+        show_images(image, new_image)
+
 
 if __name__ == "__main__":
     sys.exit(main() or 0)
